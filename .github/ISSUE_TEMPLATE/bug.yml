@@ -1,0 +1,22 @@
+name: Bug report
+description: Report a reproducible TPS or installation problem.
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: Versions and platform
+      description: Package version, Pi version, Node version and OS.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Steps, expected behavior and actual result. Redact private data.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Local diagnostic
+      description: Output from /tps json or npm run doctor. Redact private model identifiers. Never include credentials or transcripts.

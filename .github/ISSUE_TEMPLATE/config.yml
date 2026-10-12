@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Usage and design questions
+    url: https://github.com/francocarballar/pi-turn-tps/discussions
+    about: Ask the community or discuss an idea.
+  - name: Report a vulnerability privately
+    url: https://github.com/francocarballar/pi-turn-tps/security/advisories/new
+    about: Keep sensitive reports out of public issues.

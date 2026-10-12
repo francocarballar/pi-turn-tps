@@ -1,19 +1,46 @@
 {
   "name": "@francocarballar/pi-turn-tps",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Aggregated turn tokens per second for Pi, excluding tools and gaps between model calls.",
   "type": "module",
   "license": "MIT",
   "author": "Franco Carballar",
-  "repository": { "type": "git", "url": "git+https://github.com/francocarballar/pi-turn-tps.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/francocarballar/pi-turn-tps.git"
+  },
   "homepage": "https://github.com/francocarballar/pi-turn-tps#readme",
-  "bugs": { "url": "https://github.com/francocarballar/pi-turn-tps/issues" },
-  "keywords": ["pi-package", "pi", "extension", "tokens-per-second", "tps"],
-  "engines": { "node": ">=22.19.0" },
-  "files": ["extensions/", "src/", "README.md", "LICENSE", "CHANGELOG.md"],
-  "pi": { "extensions": ["./extensions/turn-tps.ts"] },
-  "peerDependencies": { "@earendil-works/pi-coding-agent": "*" },
+  "bugs": {
+    "url": "https://github.com/francocarballar/pi-turn-tps/issues"
+  },
+  "keywords": [
+    "pi-package",
+    "pi",
+    "extension",
+    "tokens-per-second",
+    "tps"
+  ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "files": [
+    "extensions/",
+    "src/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions/turn-tps.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@earendil-works/pi-ai": "1.1.0",
     "@earendil-works/pi-coding-agent": "1.1.0",
     "@types/node": "22.19.19",
     "typescript": "6.0.3"
@@ -22,6 +49,16 @@
     "test": "node --experimental-strip-types --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "check:package": "node --experimental-strip-types scripts/check-package.ts",
-    "verify": "npm run typecheck && npm test && npm run check:package"
+    "verify": "npm run lint && npm run typecheck && npm test && npm run check:package",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test:unit": "node --experimental-strip-types --test test/metrics.test.ts test/extension.test.ts",
+    "test:integration": "node --experimental-strip-types --test test/sdk.test.ts",
+    "doctor": "node --experimental-strip-types scripts/doctor.ts",
+    "benchmark": "node --experimental-strip-types scripts/benchmark.ts",
+    "release:prepare": "node --experimental-strip-types scripts/release.ts prepare",
+    "release:publish": "node --experimental-strip-types scripts/release.ts publish",
+    "release:verify": "node --experimental-strip-types scripts/release.ts verify",
+    "check:published": "node --experimental-strip-types scripts/check-published.ts"
   }
 }
