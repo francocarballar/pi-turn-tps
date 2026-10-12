@@ -14,7 +14,9 @@ and `agent_settled`. Tested with **Pi 1.1.0**; older/future hosts are not assume
 compatible. Node must satisfy the host's requirements (1.1.0: >=22.19.0).
 
 ```sh
-pi install git:github.com/francocarballar/pi-turn-tps@v0.1.0
+pi install npm:@francocarballar/pi-turn-tps@0.2.0
+# Or pin the Git release:
+pi install git:github.com/francocarballar/pi-turn-tps@v0.2.0
 ```
 
 Restart Pi or run `/reload` in an interactive session. For updates, install a new
@@ -24,8 +26,9 @@ version tag explicitly: a pinned tag does not follow main. To follow main instea
 pi install git:github.com/francocarballar/pi-turn-tps
 ```
 
-Remove with `pi remove git:github.com/francocarballar/pi-turn-tps@v0.1.0`.
+Remove with `pi remove git:github.com/francocarballar/pi-turn-tps@v0.2.0`.
 For development, `pi install ./pi-turn-tps` uses the local package without copying.
+Remove the npm installation with `pi remove npm:@francocarballar/pi-turn-tps@0.2.0`.
 
 ### Migrating the original global file
 
@@ -80,7 +83,8 @@ User/tool messages never contribute. Session navigation and shutdown reset state
 
 Status uses the stable key `turn-tps`, the provider/model (or number of distinct
 models), one decimal TPS, total output tokens and completed assistant step count.
-No UI means no status; no model tools, commands, network requests, prompt changes,
+No UI means no status. The local `/tps` command reports the latest result; `/tps json`
+returns schemaVersion 1 diagnostics (complete, empty or invalid). No model tools, network requests, prompt changes,
 telemetry or persistent session entries are added by this extension.
 
 ## Development and verification
@@ -101,7 +105,24 @@ Tests cover weighted aggregation, tool gaps, hook ordering, reasoning counted on
 multiple models, retries/continuations, missing and invalid data, ambiguous calls,
 session cleanup, headless execution and final status behavior. Package checks use
 Pi's actual loader and install the packed artifact in an isolated directory.
-CI runs on Linux, macOS and Windows with supported Node versions.
+CI runs on Linux, macOS and Windows with supported Node versions. SDK tests use
+actual Pi sessions and loopback HTTP/SSE, including streaming, tool delay, retries,
+truncation and cancellation. See [CONTRIBUTING](https://github.com/francocarballar/pi-turn-tps/blob/main/CONTRIBUTING.md)
+for the full workflow, and [architecture](https://github.com/francocarballar/pi-turn-tps/blob/main/docs/ARCHITECTURE.md)
+for correlation limits and resource budgets.
+
+```sh
+npm run doctor       # read-only JSON diagnosis
+npm run test:unit
+npm run test:integration
+npm run benchmark    # reproducible bounded-state benchmark, JSON
+npm run format
+```
+
+The meter caps turns at 10,000 steps and 32 distinct model labels. Invalid state
+is released immediately. Model identifiers reject terminal/bidi controls and the
+footer label is capped at 80 graphemes (not terminal columns). Invalid readings
+remain hidden from the footer, with an explicit reason available via `/tps`.
 
 Provider responses in the tests are synthetic. **No external model benchmark is
 claimed.** The original global indicator had already been observed in Pi; that
@@ -117,9 +138,9 @@ The timing sources and run boundaries are host-specific, so rates are not promis
 to be identical between the two hosts. No OpenCode or community TPS extension code
 was copied. This project does not claim to be the first TPS extension for Pi.
 
-Published distribution is **GitHub**. The npm manifest includes `pi-package` for
-potential future npm/gallery publication; that keyword does not register a Git-only
-release in the npm-backed gallery. This release is not published to npm.
+Distribution supports **GitHub and npm**. The `pi-package` keyword makes a published
+npm package eligible for the Pi package gallery; inclusion is controlled by its
+indexer. There is no claim about its indexing delay or number of users.
 
 References: [Pi packages](https://pi.dev/docs/latest/packages),
 [Pi extensions](https://pi.dev/docs/latest/extensions).
