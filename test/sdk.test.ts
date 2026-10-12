@@ -5,10 +5,11 @@ import type { ServerResponse } from 'node:http';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import type { TestContext } from 'node:test';
 import test from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
 import { Type } from '@earendil-works/pi-ai';
-import type { ExtensionFactory } from '@earendil-works/pi-coding-agent';
+import type { AgentSession, ExtensionFactory } from '@earendil-works/pi-coding-agent';
 import {
   createAgentSession,
   DefaultResourceLoader,
@@ -28,7 +29,12 @@ interface ResponsePlan {
 }
 
 /** A real loopback HTTP/SSE transport; no global Pi config or external provider. */
-async function harness(plans: ResponsePlan[], retries = false, providerRetries = 0) {
+async function harness(
+  t: TestContext,
+  plans: ResponsePlan[],
+  retries = false,
+  providerRetries = 0,
+) {
   const sandbox = await mkdtemp(join(tmpdir(), 'pi-tps-sdk-'));
   const statuses: (string | undefined)[] = [];
   const notifications: string[] = [];
@@ -37,6 +43,7 @@ async function harness(plans: ResponsePlan[], retries = false, providerRetries =
   let requests = 0;
   let toolDurationMs = 0;
   const pendingResponses = new Set<ServerResponse>();
+  let sessionToDispose: AgentSession | undefined;
   const server = createServer((req, res) => {
     req.resume();
     pendingResponses.add(res);
@@ -107,6 +114,19 @@ async function harness(plans: ResponsePlan[], retries = false, providerRetries =
       errors.push(error);
       res.destroy();
     });
+  });
+  // Register teardown before setup so failed setup/assertions cannot leak a server or temp tree.
+  t.after(async () => {
+    sessionToDispose?.dispose();
+    for (const response of pendingResponses) response.destroy();
+    server.closeAllConnections();
+    if (server.listening) {
+      const closed = once(server, 'close');
+      server.close();
+      await closed;
+    }
+    await rm(sandbox, { recursive: true, force: true });
+    assert.deepEqual(errors, []);
   });
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
@@ -202,6 +222,7 @@ async function harness(plans: ResponsePlan[], retries = false, providerRetries =
     sessionManager: SessionManager.inMemory(sandbox),
     settingsManager: settings,
   });
+  sessionToDispose = session;
   const runner = session.extensionRunner;
   assert.ok(runner);
   // Complete host-provided UI contract, with only the two observable sinks replaced.
@@ -238,23 +259,19 @@ async function harness(plans: ResponsePlan[], retries = false, providerRetries =
       assert.equal(result.schemaVersion, 1);
       return result;
     },
-    async close() {
-      session.dispose();
-      for (const response of pendingResponses) response.destroy();
-      server.closeAllConnections();
-      server.close();
-      await once(server, 'close');
-      await rm(sandbox, { recursive: true, force: true });
-      assert.deepEqual(errors, []);
-    },
   };
+}
+
+async function awaitFirstRequest(h: { readonly requests: number }) {
+  const deadline = performance.now() + 5000;
+  while (h.requests === 0 && performance.now() < deadline) await delay(5);
+  assert.ok(h.requests > 0, 'Pi did not reach the local HTTP fixture within five seconds');
 }
 
 test('real Pi SDK counts provider wait/stream, excludes tool delay, and counts reasoning once', {
   timeout: 20_000,
 }, async (t) => {
-  const h = await harness([{ tokens: 10, tool: true }, { tokens: 20 }]);
-  t.after(() => h.close());
+  const h = await harness(t, [{ tokens: 10, tool: true }, { tokens: 20 }]);
   const started = performance.now();
   await h.session.prompt('Use the controlled tool and finish.');
   const wallMs = performance.now() - started;
@@ -280,8 +297,7 @@ test('real Pi SDK counts provider wait/stream, excludes tool delay, and counts r
 });
 
 test('real Pi SDK resets aggregation on the next prompt', { timeout: 20_000 }, async (t) => {
-  const h = await harness([{ tokens: 30 }, { tokens: 50 }]);
-  t.after(() => h.close());
+  const h = await harness(t, [{ tokens: 30 }, { tokens: 50 }]);
   await h.session.prompt('First');
   assert.equal((await h.result()).kind, 'complete');
   await h.session.prompt('Second');
@@ -298,8 +314,7 @@ for (const [name, plan] of [
   ['truncated stream', { truncated: true }],
 ] as const) {
   test(`real Pi SDK ${name} produces an invalid diagnostic`, { timeout: 20_000 }, async (t) => {
-    const h = await harness([plan]);
-    t.after(() => h.close());
+    const h = await harness(t, [plan]);
     await h.session.prompt('Failure');
     const result = await h.result();
     assert.equal(result.kind, 'invalid');
@@ -308,10 +323,9 @@ for (const [name, plan] of [
 }
 
 test('real Pi SDK abort never publishes a partial reading', { timeout: 20_000 }, async (t) => {
-  const h = await harness([{ waitMs: 2000 }]);
-  t.after(() => h.close());
+  const h = await harness(t, [{ waitMs: 2000 }]);
   const prompt = h.session.prompt('Abort');
-  while (h.requests === 0) await delay(5);
+  await awaitFirstRequest(h);
   await h.session.abort();
   await prompt;
   const result = await h.result();
@@ -323,8 +337,7 @@ test('real Pi SDK abort never publishes a partial reading', { timeout: 20_000 },
 test('real Pi agent retry retains invalidity despite a later success', {
   timeout: 20_000,
 }, async (t) => {
-  const h = await harness([{ error: true }, { tokens: 30 }], true);
-  t.after(() => h.close());
+  const h = await harness(t, [{ error: true }, { tokens: 30 }], true);
   await h.session.prompt('Retry');
   assert.equal(h.requests, 2);
   const result = await h.result();
@@ -335,10 +348,9 @@ test('real Pi agent retry retains invalidity despite a later success', {
 test('real Pi queued follow-up shares the final settled aggregate', {
   timeout: 20_000,
 }, async (t) => {
-  const h = await harness([{ tokens: 10 }, { tokens: 20 }]);
-  t.after(() => h.close());
+  const h = await harness(t, [{ tokens: 10 }, { tokens: 20 }]);
   const prompt = h.session.prompt('First');
-  while (h.requests === 0) await delay(5);
+  await awaitFirstRequest(h);
   await h.session.followUp('Queued continuation');
   await prompt;
   await h.session.waitForIdle();
@@ -354,8 +366,7 @@ test('real Pi queued follow-up shares the final settled aggregate', {
 test('real Pi provider-internal retry remains inside one successful timed response', {
   timeout: 20_000,
 }, async (t) => {
-  const h = await harness([{ error: true }, { tokens: 30 }], false, 1);
-  t.after(() => h.close());
+  const h = await harness(t, [{ error: true }, { tokens: 30 }], false, 1);
   await h.session.prompt('Transport retry');
   assert.equal(h.requests, 2);
   assert.equal(h.trace.filter((event) => event.type === 'hook').length, 1);

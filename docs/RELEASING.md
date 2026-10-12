@@ -27,7 +27,15 @@ reusable CI on the requested tag, then prepares one exact archive and optionally
 publishes it with npm OIDC/provenance. It retains receipts as Actions artifacts.
 No static npm token is used by the workflow.
 
-After initial publication, configure npm package **Settings → Trusted publishing**:
+After initial publication, enable account 2FA (npm requires it for trust setup).
+With npm >=11.15 and an authenticated maintainer session, configure the publisher:
+
+```sh
+npm trust github @francocarballar/pi-turn-tps --repo=francocarballar/pi-turn-tps --file=release.yml --env=release --allow-publish --yes
+npm trust list @francocarballar/pi-turn-tps --json
+```
+
+The equivalent website path is package **Settings → Trusted publishing**:
 GitHub owner `francocarballar`, repository `pi-turn-tps`, workflow `release.yml`,
 environment `release`. This npm-side mapping is required; GitHub YAML alone does
 not activate trust. Restrict package publishing/2FA in npm settings as appropriate
