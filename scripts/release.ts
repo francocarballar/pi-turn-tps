@@ -14,6 +14,7 @@ const manifest: { name: string; version: string } = JSON.parse(
 const npmEntry = process.env.npm_execpath;
 assert.ok(npmEntry, 'Use npm run release:prepare or npm run release:publish.');
 const mode = process.argv[2];
+const manualAuth = process.argv.includes('--manual-auth');
 assert.ok(mode === 'prepare' || mode === 'publish' || mode === 'verify', 'Unknown release mode');
 
 function run(command: string, args: string[], capture = true) {
@@ -32,7 +33,11 @@ function run(command: string, args: string[], capture = true) {
   return result.stdout?.trim() ?? '';
 }
 function npm(args: string[], capture = true) {
-  return run(process.execPath, [npmEntry as string, ...args], capture);
+  return run(
+    process.execPath,
+    [npmEntry as string, ...(manualAuth ? ['--browser=false'] : []), ...args],
+    capture,
+  );
 }
 function integrity(filename: string) {
   return `sha512-${createHash('sha512').update(readFileSync(filename)).digest('base64')}`;

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 — 2026-10-12
+
+- Publish through the verified GitHub OIDC workflow with npm provenance.
+- Add browser-independent manual publishing for remote terminals with 2FA.
+- Enforce runtime unit coverage (100% lines/functions, at least 90% branches).
+- Update TypeScript to 7.0.2 and Node 22 types to 22.20.5; keep the minimum-runtime type surface.
+
 ## 0.2.0 — 2026-10-12
 
 - Typed complete/empty/invalid measurement results and local `/tps [json]` diagnostics.

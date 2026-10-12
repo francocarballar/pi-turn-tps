@@ -21,6 +21,7 @@ directories, including paths with spaces and Unicode.
 ```sh
 npm run test:unit
 npm run test:integration
+npm run test:coverage
 npm run format
 npm run benchmark
 ```
