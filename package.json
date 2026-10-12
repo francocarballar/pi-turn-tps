@@ -61,6 +61,6 @@
     "release:verify": "node --experimental-strip-types scripts/release.ts verify",
     "check:published": "node --experimental-strip-types scripts/check-published.ts",
     "release:publish:manual": "node --experimental-strip-types scripts/release.ts publish --manual-auth",
-    "test:coverage": "node --experimental-strip-types --experimental-test-coverage --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=90 --test test/metrics.test.ts test/extension.test.ts"
+    "test:coverage": "node --experimental-strip-types --experimental-test-coverage --test-coverage-include=src/*.ts --test-coverage-include=extensions/*.ts --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=90 --test test/metrics.test.ts test/extension.test.ts"
   }
 }
