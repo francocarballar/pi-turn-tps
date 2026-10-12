@@ -19,6 +19,23 @@ package. MIT sources load as TypeScript in Pi; there is no build/postinstall.
    the checked tarball/receipts to the GitHub release and record consumer evidence.
    These are package publication checks, not a paid external-provider benchmark.
 
+## Remote terminals and 2FA
+
+For a remote terminal without a working browser opener, use:
+
+```sh
+npm run release:publish:manual
+```
+
+Run it in an interactive terminal (TTY). It passes `--browser=false` directly to
+npm, which prints the authentication URL instead of launching a server browser.
+Open the freshly generated URL in your browser and complete npm's challenge while
+the terminal waits. This still requires browser authentication and account 2FA;
+it does not bypass either. Never share credentials or one-time codes in chat.
+If a URL returns 404, stop the attempt and check registry state before retrying;
+old or failed challenge URLs must not be reused. The underlying npm service may
+still require resolving the challenge from the maintainer's own terminal/session.
+
 ## Automated future releases
 
 The Release workflow accepts a tag and `publish` (false by default). It requires a

@@ -14,9 +14,9 @@ and `agent_settled`. Tested with **Pi 1.1.0**; older/future hosts are not assume
 compatible. Node must satisfy the host's requirements (1.1.0: >=22.19.0).
 
 ```sh
-pi install npm:@francocarballar/pi-turn-tps@0.2.0
+pi install npm:@francocarballar/pi-turn-tps@0.2.1
 # Or pin the Git release:
-pi install git:github.com/francocarballar/pi-turn-tps@v0.2.0
+pi install git:github.com/francocarballar/pi-turn-tps@v0.2.1
 ```
 
 Restart Pi or run `/reload` in an interactive session. For updates, install a new
@@ -26,9 +26,9 @@ version tag explicitly: a pinned tag does not follow main. To follow main instea
 pi install git:github.com/francocarballar/pi-turn-tps
 ```
 
-Remove with `pi remove git:github.com/francocarballar/pi-turn-tps@v0.2.0`.
+Remove with `pi remove git:github.com/francocarballar/pi-turn-tps@v0.2.1`.
 For development, `pi install ./pi-turn-tps` uses the local package without copying.
-Remove the npm installation with `pi remove npm:@francocarballar/pi-turn-tps@0.2.0`.
+Remove the npm installation with `pi remove npm:@francocarballar/pi-turn-tps@0.2.1`.
 
 ### Migrating the original global file
 

@@ -21,6 +21,7 @@ directories, including paths with spaces and Unicode.
 ```sh
 npm run test:unit
 npm run test:integration
+npm run test:coverage
 npm run format
 npm run benchmark
 ```
@@ -28,6 +29,10 @@ npm run benchmark
 The benchmark emits JSON with environment and timings. Compare repeated runs on
 the same machine; heap delta includes GC noise. Do not treat it as a provider
 benchmark or a cross-machine performance promise.
+
+Unit coverage measures only `src/` and `extensions/`, with 100% line/function and
+at least 90% branch coverage required. SDK transport scenarios run separately as
+part of full verification.
 
 ## Change boundaries
 
