@@ -47,8 +47,31 @@ jobs:
       - if: inputs.publish
         run: npm run release:publish
       - if: inputs.publish
+        name: Wait for npm installation metadata
+        timeout-minutes: 4
+        env:
+          npm_config_prefer_online: 'true'
+          npm_config_fetch_retries: '0'
+          npm_config_fetch_timeout: '10000'
+        run: |
+          releasePackage=$(node --print 'require("./package.json").name')
+          releaseVersion=$(node --print 'require("./package.json").version')
+          for attempt in {1..30}; do
+            if registryVersion=$(npm view "$releasePackage@$releaseVersion" version 2>.release/registry-ready.log) && test "$registryVersion" = "$releaseVersion"; then
+              exit 0
+            fi
+            echo "Waiting for npm installation metadata (attempt $attempt/30)"
+            if test "$attempt" -lt 30; then sleep 5; fi
+          done
+          cat .release/registry-ready.log
+          echo "npm installation metadata is not ready; publication must be reconciled before retry."
+          exit 1
+      - if: inputs.publish
+        env:
+          npm_config_prefer_online: 'true'
         run: npm run check:published
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-${{ inputs.tag }}
           path: .release/
