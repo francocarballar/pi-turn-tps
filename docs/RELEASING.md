@@ -41,7 +41,11 @@ still require resolving the challenge from the maintainer's own terminal/session
 The Release workflow accepts a tag and `publish` (false by default). It requires a
 protected `release` environment, re-runs the full 9-job verification matrix via
 reusable CI on the requested tag, then prepares one exact archive and optionally
-publishes it with npm OIDC/provenance. It retains receipts as Actions artifacts.
+publishes it with npm OIDC/provenance. It waits for npm installation metadata to propagate and forces online metadata
+revalidation before consumer checks. It retains receipts as Actions artifacts even
+if a post-publication check fails. A failed consumer check does not mean publication
+failed: reconcile the registry first; an already published matching artifact is
+verified without publishing it again.
 No static npm token is used by the workflow.
 
 After initial publication, enable account 2FA (npm requires it for trust setup).
